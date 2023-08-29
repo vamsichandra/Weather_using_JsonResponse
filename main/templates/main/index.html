@@ -1,0 +1,446 @@
+<html>{% load static %}
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.5.3/cerulean/bootstrap.min.css"
+    integrity="sha512-dQLT/B7byn2LjN/DN4zeBKpwGV6qbidV0XiMRWQOL7TGrV7FkZFldkGG+DGMU+CQnMTcRZlUI7GMWt1j6akNew=="
+    crossorigin="anonymous" />
+  <title>Forecast_Weather </title>
+  <style>
+        /* Add any custom CSS styling here */
+        /* For example, set a maximum height and add a scrollbar to the forecast section */
+        .card-block {
+    min-height: 220px;
+}
+ .forecast-container {
+            max-height: 100%;
+            overflow-x: auto;
+        }
+
+        /*body {
+            background-image: url('{% static "images/" %}{{ data.0.image }}');
+
+        }*/
+    
+    </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<!-- Google Maps JavaScript library -->
+<!-- <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places&key=AIzaSyCdGv5cjpA0dMUCSolCf89tl_vgccGvsu0"></script> -->
+ <script>
+        var sts="{% static 'images/'%}"
+    </script>
+<style>
+    
+#search_input {font-size:18px;}
+/*.form-group{
+ margin-bottom: 10px;margin-top:50px;
+}*/
+.form-group label{
+ font-size:18px;
+ font-weight: 600;
+}
+.form-group input{
+    width: 100%;
+    padding: .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.form-group input:focus {
+    color: #495057;
+    background-color: #fff;
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+</style>
+  
+</head>
+<body  id="bbody"  style="background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed; /;" >
+<script>function onSearchClick() {
+    var cityInput = document.querySelector('input[name="city"]');
+    var cityname = cityInput.value;
+    console.log("called from onSearchClick")
+    getCoordinatesFromCity(cityname);
+    var ccity=document.getElementById("citydisplay")
+                        ccity.innerText=cityname;
+    time();
+}</script>
+
+<img src="{% static 'images/weather.png' %}" class="image" style="width:100px; margin-bottom:-50px; " /><center><h4 class="display-5">Weather Desktop App</h4></center>
+
+<!-- Navigation bar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <form  id="myForm" class="col-md">
+    {% csrf_token %}
+    <div class="form-group">
+      <div class="row">
+  <div class="co2-xs-2 col-sm-2 col-lg-2 text-end ml-auto">
+      <label class="pull-right">City name:</label></div><div class="col-xs-7 col-sm-7 col-lg-7">
+      <input type="text" class="form-control" name="city" placeholder="Choose Your City ..." id="search_input">
+              <button type="submit" class="got" style="visibility: hidden" ></button>
+        <input type="hidden" name="latitude" class="latitudeInput">
+        <input type="hidden" name="longitude" class="longitudeInput"></div>
+        <div class="col-xs-3 col-sm-3 col-lg-3">
+        <button type="button" class="btn btn-primary" onclick="onSearchClick()">Search</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</nav>
+
+
+<div class="row">
+<div class="container-fluid">
+    <div class="row p-1">
+        <div class="col d-flex justify-content-center">
+            <div class="card text-white bg-dark mb-6" style="display: none;" id="diving">
+                <div class="card-body">
+<h6 id="timezone"></h6>
+<p id="current-time"></p>
+<p id="current-temperature"></p>
+<p id="current-pressure"></p>
+<p id="current-humidity"></p>
+<p id="current-forecast"></p>
+<p id="current-information"></p>
+<img id="current-icon"  style="display: none;" src="" alt="Weather Icon">
+</div>
+            </div>
+        </div>
+        <div class="col-3 col-sm-3 col-md-3 col-lg-3 pl-1 ">
+            <br/>
+        <h3 id="citydisplay" style="color: Black"; ></h3>
+        <br/>
+        <br/>
+        <h3 id="date1" style="color: Black"></h3>
+            <br/>
+            <h3 id="time" style="color: Black"></h3>
+        </div>
+    </div>
+  </div>
+  <div class="container-fluid">
+    
+<div id="daily-forecast-container" class="row flex-row flex-nowrap forecast-container p-1 " ></div>
+
+</div>
+
+
+
+
+      
+    </div>
+    <script crossorigin="anonymous" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA-LS93P40SI2zsGpcNrQ7j8TBqDAGMzE8&libraries=places"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js">
+        
+    </script>
+    <script type="text/javascript">
+    
+   
+//this is for searching by getting information from input BOX
+    function onSearchClick() {
+    var cityInput = document.querySelector('input[name="city"]');
+    var cityname = cityInput.value;
+    console.log("called from onSearchClick")
+    getCoordinatesFromCity(cityname);
+    var ccity=document.getElementById("citydisplay")
+                        ccity.innerText=cityname;
+    time();
+}
+  
+     // function to get cordinates from Locatio Access
+      su=document.getElementById("myForm");
+var successCallback = function(position){
+        var x = position.coords.latitude;
+        var y = position.coords.longitude;
+        console.log(x,y);
+        latlon(x,y);
+        getCityName(x,y);
+        
+        
+        
+      };
+
+    //Getting cordinates of a location from input box
+  function getCoordinatesFromCity(city) {
+    var geocoder = new google.maps.Geocoder();
+
+    geocoder.geocode({ address: city }, function (results, status) {
+      try {
+        if (status === google.maps.GeocoderStatus.OK) {
+          if (results[0]) {
+            var latitude = results[0].geometry.location.lat();
+            var longitude = results[0].geometry.location.lng();
+            console.log('Latitude:', latitude);
+            console.log('Longitude:', longitude);
+            latlon(latitude,longitude);
+          } else {
+            console.log('No results found with city name');
+          }
+        } else {
+          throw new Error('Geocoder failed due to: ' + status);
+        }
+      } catch (error) {
+        console.log('Error occurred:', error.message);
+      }
+    });
+  }
+// function to reverse Geocoding
+  function getCityName(latitude, longitude) {
+    const geocoder = new google.maps.Geocoder();
+    const latlng = new google.maps.LatLng(latitude, longitude);
+
+    geocoder.geocode({ location: latlng }, (results, status) => {
+        if (status === 'OK') {
+            if (results[0]) {
+                for (let i = 0; i < results[0].address_components.length; i++) {
+                    const addressType = results[0].address_components[i].types[0];
+                    if (addressType === 'locality') {
+                        const cityName = results[0].address_components[i].long_name;
+                        console.log('City Name:', cityName);
+                        var ccity=document.getElementById("citydisplay")
+                        ccity.innerText=cityName;
+
+                        // Get the current date and time
+
+                        time();
+                        return cityName;
+                    }
+                }
+            } else {
+                console.log('No results found');
+            }
+        } else {
+            console.log('Geocoder failed due to: ' + status);
+        }
+    });
+}
+
+
+function time() {
+    var currentDate = new Date();
+
+// Extract individual components
+var year = currentDate.getFullYear();
+var month = currentDate.getMonth() + 1; // Months are 0-indexed, so add 1
+var day = currentDate.getDate();
+var hours = currentDate.getHours();
+var minutes = currentDate.getMinutes();
+var seconds = currentDate.getSeconds();
+
+// Formatting single-digit values with leading zeros
+month = month < 10 ? '0' + month : month;
+day = day < 10 ? '0' + day : day;
+hours = hours < 10 ? '0' + hours : hours;
+minutes = minutes < 10 ? '0' + minutes : minutes;
+seconds = seconds < 10 ? '0' + seconds : seconds;
+
+// Create formatted date and time strings
+var formattedDate =  month + '/' + day+'/'+year;
+var formattedTime = hours + ':' + minutes + ':' + seconds;
+
+// Print the formatted date and time
+console.log('Formatted Date:', formattedDate);
+console.log('Formatted Time:', formattedTime);
+
+var ddate=document.getElementById("date1")
+                        ddate.innerText=formattedDate;
+var ttime=document.getElementById("time")
+                        ttime.innerText=formattedTime;
+
+    // body...
+}
+// Usage
+; // Replace with your latitude and longitude
+
+
+
+//form Submission code final step
+ function latlon(latitude,longitude){
+    var form = document.getElementById('myForm');
+  
+            if (document.cookie.indexOf('formSubmitted=true') === -1) {
+                  var expirationDate = new Date();
+                expirationDate.setSeconds(expirationDate.getSeconds() + 5);
+           
+            document.cookie = `formSubmitted=true; expires=${expirationDate.toUTCString()}; path=/`;
+
+            var la = document.querySelector(".latitudeInput");
+            var lo = document.querySelector(".longitudeInput");
+            var go= document.querySelector(".got")
+
+        la.value =latitude;
+        lo.value=longitude;
+        
+
+        var formData = $('#myForm').serialize();
+            console.log("Hello World next try")
+            $.ajax({
+                type: 'POST',
+                url: 'http://127.0.0.1:8000/API/',  // Change this URL to match your URL configuration
+                data: formData,
+                success: function (data) {
+                    // $('#output').html(data);
+                    var timezone = data.Timezone;
+        var currentTime = data.time;
+        var currentTemperature = data.temperature;
+        var currentPressure = data.pressure;
+        var currentHumidity = data.humidity;
+        var currentForecast = data.forecast;
+        var currentInformation = data.information;
+        var currentIcon = data.icon;
+        var boddy=data.image;
+        
+        // Update HTML elements with extracted data
+        var ddiv=document.getElementById("diving");
+        ddiv.style.display = 'block';
+        $('#timezone').text('Weather Information for ' + timezone);
+        $('#current-time').text('Time: ' + currentTime);
+        $('#current-temperature').text('Temperature: ' + currentTemperature);
+        $('#current-pressure').text('Pressure: ' + currentPressure);
+        $('#current-humidity').text('Humidity: ' + currentHumidity);
+        $('#current-forecast').text('Forecast: ' + currentForecast);
+        $('#current-information').text('Information: ' + currentInformation);
+        var imageElement = document.getElementById('current-icon');
+        imageElement.style.display = 'block';
+        $('#current-icon').attr('src', 'http://openweathermap.org/img/wn/' + currentIcon + '.png');
+        var bodyy = document.getElementById('bbody');
+        console.log("static path"+sts+boddy)
+        bodyy.style.backgroundImage="url('" + sts + boddy + "')";
+            
+
+        var dailyForecastContainer = document.querySelector('#daily-forecast-container');
+dailyForecastContainer.innerHTML = ''; // Clear previous forecast data
+
+var dailyForecast = data.daily_forecast;
+
+for (var i = 0; i < dailyForecast.length; i++) {
+    var forecastData = dailyForecast[i];
+    
+    if (i !== 0) {
+        var forecastItemDiv = document.createElement('div');
+        forecastItemDiv.className = 'col-12 col-sm-6 col-md-4 col-lg-3 pl-1 pr-1';
+        
+        var forecastItemCard = document.createElement('ul');
+        forecastItemCard.className = 'list-unstyled';
+        
+        var forecastItemCardList = document.createElement('li');
+        forecastItemCardList.className = 'card card-block text-white bg-primary mb-3';
+        forecastItemCardList.style.maxWidth = '18rem';
+        
+        var forecastItemCardHeader = document.createElement('div');
+        forecastItemCardHeader.className = 'card-header';
+        forecastItemCardHeader.textContent = 'Forecast ' + (i + 1);
+        
+        var forecastItemCardBody = document.createElement('div');
+        forecastItemCardBody.className = 'card-body';
+        
+        var forecastItemCardDate = document.createElement('p');
+        forecastItemCardDate.textContent = 'Date: ' + forecastData.date;
+        
+        var forecastItemCardTempMin = document.createElement('p');
+        forecastItemCardTempMin.textContent = 'Temperature Min: ' + forecastData.temp_min;
+        
+        var forecastItemCardTempMax = document.createElement('p');
+        forecastItemCardTempMax.textContent = 'Temperature Max: ' + forecastData.temp_max;
+        
+        var forecastItemCardHumidity = document.createElement('p');
+        forecastItemCardHumidity.textContent = 'Humidity: ' + forecastData.humidity;
+        
+        var forecastItemCardPressure = document.createElement('p');
+        forecastItemCardPressure.textContent = 'Pressure: ' + forecastData.pressure;
+        
+        var forecastItemCardDescription = document.createElement('p');
+        forecastItemCardDescription.textContent = 'Description: ' + forecastData.description;
+        
+        var forecastItemCardIcon = document.createElement('div');
+        forecastItemCardIcon.className = 'bg-white';
+        
+        var forecastItemCardIconImg = document.createElement('img');
+        forecastItemCardIconImg.src = 'http://openweathermap.org/img/wn/' + forecastData.icon + '.png';
+        forecastItemCardIconImg.alt = 'Weather Icon';
+        
+        forecastItemCardIcon.appendChild(forecastItemCardIconImg);
+        forecastItemCardBody.appendChild(forecastItemCardDate);
+        forecastItemCardBody.appendChild(forecastItemCardTempMin);
+        forecastItemCardBody.appendChild(forecastItemCardTempMax);
+        forecastItemCardBody.appendChild(forecastItemCardHumidity);
+        forecastItemCardBody.appendChild(forecastItemCardPressure);
+        forecastItemCardBody.appendChild(forecastItemCardDescription);
+        forecastItemCardBody.appendChild(forecastItemCardIcon);
+        forecastItemCardList.appendChild(forecastItemCardHeader);
+        forecastItemCardList.appendChild(forecastItemCardBody);
+        forecastItemCard.appendChild(forecastItemCardList);
+        forecastItemDiv.appendChild(forecastItemCard);
+        dailyForecastContainer.appendChild(forecastItemDiv);
+    }
+}
+
+
+    },
+    error: function (error) {
+        console.log(error);
+    }
+                
+            });
+
+           }
+}
+
+ 
+
+      var errorCallback = function(error){
+        var errorMessage = 'Unknown error';
+        switch(error.code) {
+          case 1:
+            errorMessage = 'Permission denied';
+            break;
+          case 2:
+            errorMessage = 'Position unavailable';
+            break;
+          case 3:
+            errorMessage = 'Timeout';
+            break;
+        }
+        console.log(errorMessage);
+      };
+
+      var options = {
+        enableHighAccuracy: true,
+        timeout: 3000,
+        maximumAge: 0
+      };
+      
+      navigator.geolocation.getCurrentPosition(successCallback,errorCallback,options);
+      var searchInput = 'search_input';
+
+
+//Auto address acomplete code
+ $(document).ready(function () { 
+    var autocomplete;
+    autocomplete = new google.maps.places.Autocomplete((document.getElementById(searchInput)), {
+        types: ['geocode'],
+        /*componentRestrictions: {
+            country: "USA"
+        }*/
+    });
+
+    google.maps.event.addListener(autocomplete, 'place_changed', function () {
+        var near_place = autocomplete.getPlace();
+    });
+});
+
+
+</script>
+
+
+</body>
+
+</html>
