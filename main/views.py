@@ -15,7 +15,7 @@ def get_future_dates():
     return future_dates
 
 def get_weather_data(lat, lon):
-    api_key = 'febb7fc684dc6e7ca367b3d621349774'
+    api_key = 'Type_your_API_Key'
     url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&units=imperial&exclude=minutely,hourly,alerts&appid={api_key}'
     
     response = requests.get(url)
